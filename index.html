@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VNO atvykimai</title>
+<meta name="description" content="Lėktuvų atvykimai į Vilniaus oro uostą realiu laiku">
+<meta name="theme-color" content="#0F1C2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VNO">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap&subset=latin-ext" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1C2E; --surface:#16263B; --surface2:#1D3049; --ink:#EAF0F6; --muted:#8FA3BA; --line:#26405C;
+  --red:#E5484D; --amber:#F2B01E; --green:#22B573; --grey:#6B7F96; --violet:#8E7CF0;
+  --red-t:rgba(229,72,77,.16); --amber-t:rgba(242,176,30,.15); --green-t:rgba(34,181,115,.16); --grey-t:rgba(107,127,150,.10);
+  --on-amber:#1E1600;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme="light"]{
+  --bg:#EDF1F5; --surface:#FFFFFF; --surface2:#E3E9F0; --ink:#0F1C2E; --muted:#5A6D83; --line:#CFD9E3;
+  --red:#D93A40; --amber:#E0A000; --green:#169A5E; --grey:#7A8CA1;
+  --red-t:rgba(217,58,64,.12); --amber-t:rgba(224,160,0,.16); --green-t:rgba(22,154,94,.13); --grey-t:rgba(122,140,161,.10);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"])[data-theme="auto"]{
+    --bg:#EDF1F5; --surface:#FFFFFF; --surface2:#E3E9F0; --ink:#0F1C2E; --muted:#5A6D83; --line:#CFD9E3;
+    --red:#D93A40; --amber:#E0A000; --green:#169A5E; --grey:#7A8CA1;
+    --red-t:rgba(217,58,64,.12); --amber-t:rgba(224,160,0,.16); --green-t:rgba(22,154,94,.13); --grey-t:rgba(122,140,161,.10);
+    color-scheme:light;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--sans);-webkit-font-smoothing:antialiased;min-height:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 40px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin:0 -16px;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px}
+.brand{flex:1;min-width:0;overflow:hidden}
+.brand h1{margin:0;font:700 24px/1 var(--cond);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:4px 0 0;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.brand p span:last-child{overflow:hidden;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--grey);flex:none}
+.dot.live{background:var(--green);box-shadow:0 0 0 0 var(--green);animation:pulse 2.4s infinite}
+.dot.warn{background:var(--amber)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,181,115,.55)}70%{box-shadow:0 0 0 8px rgba(34,181,115,0)}100%{box-shadow:0 0 0 0 rgba(34,181,115,0)}}
+.clock small{font-size:14px;color:var(--muted);margin-left:1px}
+.clock{font:600 22px/1 var(--cond);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- notices ---------- */
+.notice{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+@media (min-width:520px){.notice{flex-direction:row;align-items:center}}
+.notice b{font-weight:600}
+.notice button{flex:none;border:0;border-radius:10px;padding:7px 12px;background:var(--surface2);font-weight:600;font-size:14px}
+.notice.warn{border-color:var(--amber)}
+
+/* ---------- approach strip (the hero) ---------- */
+.approach{margin-top:16px;padding:14px 14px 12px;background:var(--surface);border-radius:18px;border:1px solid var(--line)}
+.approach h2{margin:0 0 2px;font:600 20px/1.15 var(--cond)}
+.approach .next{margin:0 0 12px;font-size:14px;color:var(--muted);min-height:20px}
+.approach .next strong{color:var(--ink);font-weight:600}
+.track{position:relative;height:104px;border-radius:12px;background:var(--surface2);overflow:hidden}
+.zone10{position:absolute;top:0;bottom:22px;right:0;width:calc(10/60*100%);background:var(--green-t);border-left:2px dashed var(--green)}
+.runway{position:absolute;left:0;right:0;bottom:22px;height:1px;background:var(--line)}
+.ticks{position:absolute;left:0;right:0;bottom:0;height:22px}
+.ticks span{position:absolute;bottom:4px;transform:translateX(-50%);font:500 11px/1 var(--sans);color:var(--muted);font-variant-numeric:tabular-nums}
+.ticks span:last-child{transform:translateX(-100%);padding-right:6px;color:var(--ink);font-weight:600}
+.chip{position:absolute;height:24px;padding:0 7px 0 5px;border-radius:7px;display:flex;align-items:center;gap:4px;font:700 13px/1 var(--cond);white-space:nowrap;transform:translateX(-100%);background:var(--c);color:#fff;border:0}
+.chip svg{width:13px;height:13px;transform:rotate(90deg)}
+.chip.s-late{color:var(--on-amber)}
+.empty-track{position:absolute;inset:0 0 22px;display:grid;place-items:center;font-size:14px;color:var(--muted)}
+
+/* ---------- legend ---------- */
+.legend{margin:14px 0 0;display:grid;grid-template-columns:1fr;gap:6px;font-size:14px}
+.legend div{display:flex;align-items:center;gap:10px}
+.legend i{width:26px;height:14px;border-radius:4px;flex:none;background:var(--c)}
+.legend span{color:var(--muted)}
+.legend span b{color:var(--ink);font-weight:600}
+@media (min-width:560px){.legend{grid-template-columns:1fr 1fr}}
+
+/* ---------- filters ---------- */
+.filters{display:flex;gap:8px;overflow-x:auto;margin:16px -16px 0;padding:2px 16px 4px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-weight:600;font-size:14px}
+.filters button i{width:9px;height:9px;border-radius:50%;background:var(--c,var(--muted))}
+.filters button em{font-style:normal;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filters button[aria-pressed="true"] em{color:inherit;opacity:.7}
+
+/* ---------- list ---------- */
+.sec{margin:22px 0 8px;font:600 18px/1.2 var(--cond);display:flex;align-items:baseline;gap:8px}
+.sec small{font:400 13px var(--sans);color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.f{--c:var(--grey);--t:var(--grey-t);position:relative;display:block;width:100%;text-align:left;border:0;background:var(--surface);border-radius:14px;padding:0;overflow:hidden}
+.f::before{content:"";position:absolute;inset:0;background:var(--t);pointer-events:none}
+.f .row{position:relative;display:grid;grid-template-columns:8px auto minmax(0,1fr) auto;align-items:center;gap:0 12px;padding:11px 12px 11px 0;min-height:72px}
+.slab{align-self:stretch;background:var(--c);margin:-11px 0}
+.tm{min-width:52px}
+.tm b{display:block;font:700 24px/1 var(--cond);font-variant-numeric:tabular-nums}
+.tm s{display:block;margin-top:3px;font:500 13px/1 var(--sans);color:var(--muted);font-variant-numeric:tabular-nums}
+.mid{min-width:0}
+.mid .no{font:700 17px/1.1 var(--cond);letter-spacing:.02em}
+.mid .from{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mid .from span{color:var(--muted);font-weight:400;font-size:13px;margin-left:4px}
+.mid .meta{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{justify-self:end;background:var(--c);color:#fff;border-radius:9px;padding:7px 10px;font:700 15px/1 var(--cond);text-align:center;min-width:76px;white-space:nowrap}
+.pill small{display:block;font:500 11px/1.2 var(--sans);opacity:.9;margin-top:2px}
+.s-landed{--c:var(--red);--t:var(--red-t)}
+.s-late{--c:var(--amber);--t:var(--amber-t)}
+.s-soon{--c:var(--green);--t:var(--green-t)}
+.s-cancel{--c:var(--grey);--t:transparent}
+.s-cancel .tm b,.s-cancel .mid .no{text-decoration:line-through;opacity:.6}
+.s-divert{--c:var(--violet);--t:transparent}
+.f.s-late .pill{color:var(--on-amber)}
+.f.s-ontime .pill{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.taxi{font-size:13px;margin-top:2px;color:var(--ink);font-weight:500}
+
+.details{position:relative;display:none;padding:2px 14px 14px 20px}
+.f[aria-expanded="true"] .details{display:block}
+.details dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;font-size:14px}
+.details dt{color:var(--muted);font-size:12px}
+.details dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums}
+.details a{display:inline-block;margin-top:12px;color:var(--ink);font-weight:600;font-size:14px}
+@media (min-width:480px){.details dl{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.empty{padding:28px 16px;text-align:center;color:var(--muted);background:var(--surface);border-radius:14px}
+.foot{margin-top:24px;font-size:12px;color:var(--muted);text-align:center}
+
+/* ---------- settings ---------- */
+dialog{border:0;border-radius:20px;padding:0;background:var(--surface);color:var(--ink);width:min(520px,calc(100% - 24px));max-height:calc(100% - 48px)}
+dialog::backdrop{background:rgba(5,10,18,.6)}
+.dlg{padding:20px}
+.dlg h2{margin:0 0 4px;font:700 24px/1.1 var(--cond)}
+.dlg p{margin:0 0 14px;font-size:14px;color:var(--muted)}
+.dlg label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+.dlg input,.dlg select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:16px}
+.dlg .actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:600;background:var(--surface2)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <h1>VNO atvykimai</h1>
+        <p><span class="dot" id="dot"></span><span id="status">Kraunama…</span></p>
+      </div>
+      <div class="clock" id="clock" aria-label="Laikas Vilniuje">--:--</div>
+      <button class="icon-btn" id="refresh" aria-label="Atnaujinti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <button class="icon-btn" id="openSettings" aria-label="Nustatymai">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="notices"></div>
+
+  <section class="approach" aria-labelledby="apH">
+    <h2 id="apH">Artėja per valandą</h2>
+    <p class="next" id="next"></p>
+    <div class="track" id="track">
+      <div class="zone10"></div>
+      <div class="runway"></div>
+      <div class="ticks"><span style="left:0%;transform:none;padding-left:6px">60 min</span><span style="left:25%">45</span><span style="left:50%">30</span><span style="left:75%">15</span><span style="left:83.33%;color:var(--green);font-weight:600">10</span><span style="left:100%">VNO</span></div>
+    </div>
+    <div class="legend" aria-label="Spalvų reikšmės">
+      <div style="--c:var(--green)"><i></i><span><b>Žalia</b> nusileis per 10 min arba jau skrenda netoli (iki 50 km)</span></div>
+      <div style="--c:var(--amber)"><i></i><span><b>Geltona</b> vėluoja 15 min ar daugiau</span></div>
+      <div style="--c:var(--red)"><i></i><span><b>Raudona</b> jau nusileido</span></div>
+      <div style="--c:var(--grey)"><i></i><span><b>Pilka</b> skrenda pagal tvarkaraštį</span></div>
+    </div>
+  </section>
+
+  <nav class="filters" id="filters" aria-label="Filtras"></nav>
+
+  <main id="main"></main>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<dialog id="settings">
+  <form class="dlg" method="dialog" id="settingsForm">
+    <h2>Nustatymai</h2>
+    <p>Tikri duomenys ateina per jūsų Cloudflare Worker serverį (failas worker.js). Be jo rodomi pavyzdiniai skrydžiai.</p>
+    <label for="apiInput">Duomenų serverio adresas</label>
+    <input id="apiInput" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://vno.jusu-vardas.workers.dev">
+    <label for="themeInput">Tema</label>
+    <select id="themeInput">
+      <option value="auto">Kaip telefone</option>
+      <option value="dark">Tamsi</option>
+      <option value="light">Šviesi</option>
+    </select>
+    <div class="actions">
+      <button class="btn" value="cancel" type="submit">Atšaukti</button>
+      <button class="btn primary" value="save" type="submit">Išsaugoti</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ===== Nustatymai ===== */
+const DEFAULT_API = "";            // čia galima įrašyti Worker adresą, pvz. "https://vno.vardas.workers.dev"
+const REFRESH_MS = 30000;          // duomenų atnaujinimas kas 30 s
+const VNO = { lat: 54.6341, lon: 25.2858 };
+const NEAR_KM = 50;                // "skrenda netoli"
+const SOON_MIN = 10;               // "nusileis per 10 min"
+const LATE_MIN = 15;               // nuo kiek minučių laikoma vėlavimu
+const SHOW_LANDED_H = 3;           // kiek valandų rodyti nusileidusius
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const qsApi = new URLSearchParams(location.search).get("api");
+if (qsApi) store.set("vno.api", qsApi);
+let API = store.get("vno.api", DEFAULT_API);
+let theme = store.get("vno.theme", "dark");
+document.documentElement.dataset.theme = theme;
+
+const state = { flights: [], live: [], updated: 0, mode: "loading", err: "", filter: store.get("vno.filter", "all"), open: null, loading: false };
+
+/* ===== Laikas ===== */
+const fmtHM = new Intl.DateTimeFormat("lt-LT", { timeZone: "Europe/Vilnius", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const fmtHMS = new Intl.DateTimeFormat("lt-LT", { timeZone: "Europe/Vilnius", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+const hm = t => t ? fmtHM.format(new Date(t * 1000)) : "—";
+const nowS = () => Date.now() / 1000;
+
+/* ===== Miestai lietuviškai ===== */
+const CITY_LT = {"London":"Londonas","Riga":"Ryga","Warsaw":"Varšuva","Frankfurt":"Frankfurtas","Copenhagen":"Kopenhaga","Stockholm":"Stokholmas","Helsinki":"Helsinkis","Oslo":"Oslas","Istanbul":"Stambulas","Munich":"Miunchenas","Vienna":"Viena","Berlin":"Berlynas","Paris":"Paryžius","Rome":"Roma","Milan":"Milanas","Bergamo":"Bergamas","Barcelona":"Barselona","Madrid":"Madridas","Amsterdam":"Amsterdamas","Dublin":"Dublinas","Tel Aviv":"Tel Avivas","Tel Aviv-Yafo":"Tel Avivas","Antalya":"Antalija","Dubai":"Dubajus","Brussels":"Briuselis","Zurich":"Ciurichas","Prague":"Praha","Budapest":"Budapeštas","Tallinn":"Talinas","Larnaca":"Larnaka","Malaga":"Malaga","Alicante":"Alikantė","Tenerife":"Tenerifė","Billund":"Bilundas","Dortmund":"Dortmundas","Hamburg":"Hamburgas","Cologne":"Kelnas","Dusseldorf":"Diuseldorfas","Düsseldorf":"Diuseldorfas","Edinburgh":"Edinburgas","Manchester":"Mančesteris","Liverpool":"Liverpulis","Birmingham":"Birmingamas","Bristol":"Bristolis","Luton":"Lutonas","Gdansk":"Gdanskas","Krakow":"Krokuva","Athens":"Atėnai","Heraklion":"Heraklionas","Hurghada":"Hurgada","Sharm el-Sheikh":"Šarm el Šeichas","Tbilisi":"Tbilisis","Kutaisi":"Kutaisis","Baku":"Baku","Yerevan":"Jerevanas","Lisbon":"Lisabona","Nice":"Nica","Venice":"Venecija","Naples":"Neapolis","Treviso":"Trevizas","Pisa":"Piza","Bologna":"Bolonija","Catania":"Katanija","Palermo":"Palermas","Bari":"Bari","Eindhoven":"Eindhovenas","Frankfurt-Hahn":"Hanas","Hahn":"Hanas","Doha":"Doha","Burgas":"Burgasas","Varna":"Varna","Rhodes":"Rodas","Corfu":"Korfu","Chania":"Chanija","Palma de Mallorca":"Palma de Maljorka","Gran Canaria":"Gran Kanarija","Las Palmas":"Las Palmas","Valencia":"Valensija","Paphos":"Pafosas","Bergen":"Bergenas","Stavanger":"Stavangeris","Trondheim":"Trondheimas","Aalesund":"Olesundas","Gothenburg":"Geteborgas","Malmo":"Malmė","Reykjavik":"Reikjavikas","Kyiv":"Kyjivas","Minsk":"Minskas","Kaunas":"Kaunas","Palanga":"Palanga","Lviv":"Lvivas","Kittila":"Kitilė","Rovaniemi":"Rovaniemis","Sharjah":"Šardža","Abu Dhabi":"Abu Dabis","Leeds":"Lidsas","Glasgow":"Glazgas","Doncaster":"Donkasteris","Belfast":"Belfastas","Cork":"Korkas","Shannon":"Šanonas","Stuttgart":"Štutgartas","Nuremberg":"Niurnbergas","Memmingen":"Memingenas","Bremen":"Bremenas","Karlsruhe":"Karlsrūhė","Weeze":"Vėzė","Charleroi":"Šarlerua","Geneva":"Ženeva","Basel":"Bazelis","Sofia":"Sofija","Bucharest":"Bukareštas","Belgrade":"Belgradas","Split":"Splitas","Dubrovnik":"Dubrovnikas","Podgorica":"Podgorica","Tirana":"Tirana","Sharm El Sheikh":"Šarm el Šeichas","Marsa Alam":"Marsa Alamas","Enfidha":"Enfida","Monastir":"Monastyras","Dalaman":"Dalamanas","Bodrum":"Bodrumas","Izmir":"Izmiras"};
+const city = f => { const c = f.fromCity || f.fromName || f.fromCode || "—"; return CITY_LT[c] || c; };
+
+/* ===== Pagalbinės ===== */
+function km(a, b) {
+  const R = 6371, r = x => x * Math.PI / 180;
+  const dLa = r(b.lat - a.lat), dLo = r(b.lon - a.lon);
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const normReg = s => (s || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const prettyNo = n => (n || "").replace(/^([A-Z0-9]{2})(\d+[A-Z]?)$/, "$1 $2");
+
+/* ===== Pavyzdiniai duomenys ===== */
+const DEMO_ROUTES = [
+  ["FR","RYR","2961","Ryanair","Londonas","STN","B738"],["BT","BTI","342","airBaltic","Ryga","RIX","BCS3"],
+  ["LO","LOT","771","LOT","Varšuva","WAW","E195"],["LH","DLH","880","Lufthansa","Frankfurtas","FRA","A20N"],
+  ["W6","WZZ","4361","Wizz Air","Londonas","LTN","A21N"],["SK","SAS","1742","SAS","Kopenhaga","CPH","CRJ9"],
+  ["TK","THY","1411","Turkish Airlines","Stambulas","IST","A321"],["AY","FIN","1103","Finnair","Helsinkis","HEL","AT76"],
+  ["KL","KLM","1449","KLM","Amsterdamas","AMS","E190"],["FR","RYR","1856","Ryanair","Dublinas","DUB","B738"],
+  ["OS","AUA","917","Austrian","Viena","VIE","A320"],["LX","SWR","1352","Swiss","Ciurichas","ZRH","BCS1"],
+  ["FZ","FDB","1471","flydubai","Dubajus","DXB","B38M"],["W6","WZZ","1810","Wizz Air","Barselona","BCN","A320"],
+  ["LH","DLH","2604","Lufthansa","Miunchenas","MUC","CRJ9"],["FR","RYR","2872","Ryanair","Bergamas","BGY","B738"],
+  ["D8","IBK","4555","Norwegian","Stokholmas","ARN","B738"],["BT","BTI","930","airBaltic","Hamburgas","HAM","BCS3"],
+  ["LO","LOT","797","LOT","Varšuva","WAW","DH8D"],["FR","RYR","1570","Ryanair","Berlynas","BER","B738"]
+];
+const DEMO_OFF = [-160,-125,-96,-72,-50,-33,-19,-8,3,7,12,18,26,34,44,58,76,98,124,150];
+const DEMO_DELAY = [0,22,0,5,0,31,0,0,0,2,0,35,0,0,48,0,0,20,0,0];
+function makeDemo() {
+  const base = Math.floor(nowS() / 300) * 300;
+  return DEMO_ROUTES.map((r, i) => {
+    const sched = base + DEMO_OFF[i] * 60;
+    const d = DEMO_DELAY[i] * 60;
+    const eta = sched + d;
+    return {
+      id: "demo" + i, flight: r[0] + r[2], callsign: r[1] + r[2], airline: r[3], aircraft: r[6], reg: "",
+      fromCity: r[4], fromCode: r[5], sched, est: eta, real: null, status: i === 13 ? "canceled" : "", demo: true
+    };
+  });
+}
+
+/* ===== Duomenų gavimas ===== */
+async function load(manual) {
+  if (state.loading) return;
+  state.loading = true; $("#refresh").classList.add("spin");
+  try {
+    if (!API) { useDemo(""); return; }
+    const r = await fetch(API.replace(/\/+$/, "") + "/arrivals", { cache: "no-store" });
+    if (!r.ok) throw new Error("serveris atsakė " + r.status);
+    const j = await r.json();
+    if (!j.flights || !j.flights.length) throw new Error((j.errors && j.errors.join(", ")) || "tuščias skrydžių sąrašas");
+    state.flights = j.flights; state.live = j.live || []; state.updated = j.updated || Date.now();
+    state.mode = "live"; state.err = (j.errors && j.errors.length) ? "Dalis duomenų nepasiekiama: " + j.errors.join(", ") : "";
+    store.set("vno.cache", JSON.stringify(j));
+  } catch (e) {
+    const msg = "Nepavyko atnaujinti (" + e.message + ").";
+    if (state.mode === "live" && Date.now() - state.updated < 15 * 60e3) { state.err = msg + " Rodomi paskutiniai gauti duomenys."; }
+    else {
+      let cached = null; try { cached = JSON.parse(store.get("vno.cache", "null")); } catch (_) {}
+      if (cached && Date.now() - cached.updated < 30 * 60e3) {
+        state.flights = cached.flights; state.live = cached.live || []; state.updated = cached.updated;
+        state.mode = "live"; state.err = msg + " Rodomi išsaugoti duomenys.";
+      } else useDemo(msg);
+    }
+  } finally {
+    state.loading = false; $("#refresh").classList.remove("spin"); render();
+  }
+}
+function useDemo(msg) {
+  if (state.mode !== "demo" || !state.flights.length || nowS() - state.flights[0].sched > 4 * 3600) state.flights = makeDemo();
+  state.live = []; state.mode = "demo"; state.err = msg; state.updated = Date.now();
+}
+
+/* ===== Būsenos skaičiavimas ===== */
+function enrich(now) {
+  const byCs = new Map(), byReg = new Map();
+  for (const a of state.live) {
+    if (a.callsign) byCs.set(a.callsign.toUpperCase(), a);
+    if (a.reg) byReg.set(normReg(a.reg), a);
+  }
+  return state.flights.map(f => {
+    let lv = (f.callsign && byCs.get(f.callsign.toUpperCase())) || (f.reg && byReg.get(normReg(f.reg))) || null;
+    let eta = f.est || f.sched;
+    let landedAt = f.real && f.real <= now + 60 ? f.real : null;
+    const st = (f.status || "").toLowerCase();
+    if (!landedAt && st === "landed") landedAt = f.est || f.sched;
+
+    if (f.demo && !landedAt && st !== "canceled") {
+      const m = (eta - now) / 60;
+      if (m <= 0) landedAt = eta;
+      else if (m < 25) lv = { dist: m * 7.5, alt: Math.round(m * 1100 / 100) * 100, gs: Math.round(150 + m * 9), ground: false };
+    }
+    let dist = null;
+    if (lv) {
+      dist = lv.dist != null ? lv.dist : km(VNO, lv);
+      if (lv.ground && dist < 6 && !landedAt) landedAt = Math.min(now, eta);
+      if (!lv.ground && lv.gs > 80 && dist < 250 && !f.est) eta = now + (dist / (lv.gs * 1.852)) * 3600 + 120;
+    }
+    const delay = Math.round((eta - f.sched) / 60);
+    const mins = (eta - now) / 60;
+    let k;
+    if (st === "canceled" || st === "cancelled") k = "cancel";
+    else if (st === "diverted") k = "divert";
+    else if (landedAt) k = "landed";
+    else if (mins <= SOON_MIN || (dist != null && dist <= NEAR_KM && !(lv && lv.ground))) k = "soon";
+    else if (delay >= LATE_MIN || st === "delayed") k = "late";
+    else k = "ontime";
+    return { ...f, lv, dist, eta, landedAt, delay, mins, k };
+  });
+}
+
+function pill(x, now) {
+  switch (x.k) {
+    case "landed": {
+      const ago = Math.max(0, Math.round((now - x.landedAt) / 60));
+      return ago < 90 ? `Nusileido<small>prieš ${ago} min</small>` : "Nusileido";
+    }
+    case "soon": {
+      const m = Math.round(x.mins);
+      return m <= 1 ? "Leidžiasi<small>dabar</small>" : `Po ${m} min${x.dist != null ? `<small>${Math.round(x.dist)} km</small>` : ""}`;
+    }
+    case "late": return `Vėluoja<small>+${x.delay} min</small>`;
+    case "cancel": return "Atšauktas";
+    case "divert": return "Nukreiptas";
+    default: {
+      const m = Math.round(x.mins);
+      return m < 60 ? `Po ${m} min` : `Laiku<small>po ${Math.floor(m / 60)} val ${m % 60} min</small>`;
+    }
+  }
+}
+function taxiLine(x, now) {
+  const t = x.landedAt || x.eta;
+  if (!t || x.k === "cancel" || x.k === "divert") return "";
+  const a = t + 20 * 60, b = t + 45 * 60;
+  if (now > b + 15 * 60) return "";
+  if (x.k === "landed" || x.k === "soon" || x.mins < 60) return `Keleiviai išeis ${hm(a)}–${hm(b)}`;
+  return "";
+}
+
+/* ===== Piešimas ===== */
+const PLANE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
+const FILTERS = [
+  ["all", "Visi", null], ["soon", "Netrukus", "var(--green)"], ["late", "Vėluoja", "var(--amber)"], ["landed", "Nusileido", "var(--red)"]
+];
+
+function render() {
+  const now = nowS();
+  const all = enrich(now);
+  const upcoming = all.filter(x => x.k !== "landed" && x.eta > now - 3 * 3600).sort((a, b) => a.eta - b.eta);
+  const landed = all.filter(x => x.k === "landed" && now - x.landedAt < SHOW_LANDED_H * 3600).sort((a, b) => b.landedAt - a.landedAt);
+  const counts = { all: upcoming.length + landed.length, soon: upcoming.filter(x => x.k === "soon").length, late: upcoming.filter(x => x.k === "late").length, landed: landed.length };
+
+  // statusas
+  const dot = $("#dot"), status = $("#status");
+  dot.className = "dot " + (state.mode === "live" && !state.err ? "live" : state.mode === "loading" ? "" : "warn");
+  const ago = Math.round((Date.now() - state.updated) / 1000);
+  status.textContent = state.mode === "demo" ? "Pavyzdiniai duomenys"
+    : state.mode === "live" ? (ago < 60 ? `Atnaujinta prieš ${ago} s` : `Atnaujinta prieš ${Math.round(ago / 60)} min`)
+    : "Kraunama…";
+
+  // pranešimai
+  let n = "";
+  if (state.mode === "demo") n += `<div class="notice warn"><div><b>Rodomi pavyzdiniai skrydžiai.</b> ${state.err ? esc(state.err) + " " : ""}Įrašykite duomenų serverio adresą, kad matytumėte tikrus atvykimus.</div><button type="button" data-act="settings">Nustatymai</button></div>`;
+  else if (state.err) n += `<div class="notice warn"><div>${esc(state.err)}</div></div>`;
+  if (installHint) n += `<div class="notice"><div>${installHint}</div><button type="button" data-act="${deferredPrompt ? "install" : "hidehint"}">${deferredPrompt ? "Įdiegti" : "Supratau"}</button></div>`;
+  $("#notices").innerHTML = n;
+
+  // artėjimo juosta
+  const track = $("#track");
+  track.querySelectorAll(".chip,.empty-track").forEach(e => e.remove());
+  const near = upcoming.filter(x => x.k !== "cancel" && x.k !== "divert" && x.mins <= 60 && x.mins > -15).sort((a, b) => b.mins - a.mins);
+  let html = "";
+  for (const x of near) {
+    html += `<button type="button" class="chip s-${x.k}" style="--c:var(--${x.k === "soon" ? "green" : x.k === "late" ? "amber" : "grey"});left:0;top:6px;visibility:hidden" data-id="${esc(x.id)}" data-m="${Math.max(0, Math.min(60, x.mins))}" aria-label="${esc(prettyNo(x.flight))}, ${esc(city(x))}">${PLANE}${esc(prettyNo(x.flight))}</button>`;
+  }
+  if (!near.length) html = `<div class="empty-track">Per artimiausią valandą lėktuvų nelaukiama</div>`;
+  track.insertAdjacentHTML("beforeend", html);
+  // išdėstymas: kiekvienas lėktuvas savo vietoje pagal minutes, persidengiantys keliami į kitą eilę
+  const W = track.clientWidth || 320, lanes = [-1e9, -1e9, -1e9];
+  track.querySelectorAll(".chip").forEach(ch => {
+    const w = ch.offsetWidth;
+    const px = Math.max(w + 4, (1 - (+ch.dataset.m) / 60) * W - 2);
+    let lane = lanes.findIndex(r => px - w - 4 >= r);
+    if (lane < 0) lane = lanes.indexOf(Math.min(...lanes));
+    lanes[lane] = px;
+    ch.style.left = px + "px"; ch.style.top = (6 + lane * 26) + "px"; ch.style.visibility = "";
+  });
+
+  const nx = upcoming.find(x => x.k !== "cancel" && x.k !== "divert" && x.mins > -5);
+  $("#next").innerHTML = nx
+    ? `Artimiausias: <strong>${esc(prettyNo(nx.flight))}</strong> (${esc(city(nx))}) ${nx.mins <= 1 ? "leidžiasi dabar" : "nusileis po " + Math.round(nx.mins) + " min, " + hm(nx.eta)}`
+    : "Laukiamų skrydžių nėra";
+
+  // filtrai
+  $("#filters").innerHTML = FILTERS.map(([k, label, c]) =>
+    `<button type="button" data-filter="${k}" aria-pressed="${state.filter === k}" ${c ? `style="--c:${c}"` : ""}>${c ? "<i></i>" : ""}${label}<em>${counts[k]}</em></button>`).join("");
+
+  // sąrašas
+  const f = state.filter;
+  let up = upcoming, ld = landed;
+  if (f === "soon") { up = upcoming.filter(x => x.k === "soon"); ld = []; }
+  if (f === "late") { up = upcoming.filter(x => x.k === "late"); ld = []; }
+  if (f === "landed") { up = []; }
+  let out = "";
+  if (f !== "landed") {
+    out += `<h2 class="sec">Laukiami <small>${up.length}</small></h2>`;
+    out += up.length ? `<div class="list">${up.map(x => row(x, now)).join("")}</div>`
+      : `<div class="empty">${f === "soon" ? "Šiuo metu artėjančių lėktuvų nėra. Žalia spalva atsiras likus 10 min iki nusileidimo." : f === "late" ? "Vėluojančių skrydžių nėra." : "Laukiamų skrydžių nėra."}</div>`;
+  }
+  if (f === "all" || f === "landed") {
+    out += `<h2 class="sec">Nusileido <small>per ${SHOW_LANDED_H} val</small></h2>`;
+    out += ld.length ? `<div class="list">${ld.map(x => row(x, now)).join("")}</div>` : `<div class="empty">Per pastarąsias ${SHOW_LANDED_H} valandas nusileidusių skrydžių nėra.</div>`;
+  }
+  $("#main").innerHTML = out;
+  $("#foot").textContent = state.mode === "live" ? "Duomenys: Flightradar24 ir atviri ADS-B tinklai. Laikas Vilniaus." : "Pavyzdiniai duomenys rodomi tik demonstracijai.";
+}
+
+function row(x, now) {
+  const showS = x.k !== "cancel" && Math.abs(x.delay) >= 5;
+  const tMain = x.k === "landed" ? x.landedAt : x.k === "cancel" ? x.sched : x.eta;
+  const meta = [x.airline, x.aircraft, x.dist != null && x.k !== "landed" ? Math.round(x.dist) + " km" : ""].filter(Boolean).join(", ");
+  const taxi = taxiLine(x, now);
+  const open = state.open === x.id;
+  const lv = x.lv;
+  const fr = (x.flight || x.callsign || "").toLowerCase().replace(/\s/g, "");
+  return `<div class="f s-${x.k}" role="button" tabindex="0" data-id="${esc(x.id)}" aria-expanded="${open}">
+    <div class="row">
+      <div class="slab"></div>
+      <div class="tm"><b>${hm(tMain)}</b>${showS ? `<s>${hm(x.sched)}</s>` : ""}</div>
+      <div class="mid">
+        <div class="no">${esc(prettyNo(x.flight))}</div>
+        <div class="from">${esc(city(x))}<span>${esc(x.fromCode)}</span></div>
+        ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+        ${taxi ? `<div class="taxi">${taxi}</div>` : ""}
+      </div>
+      <div class="pill">${pill(x, now)}</div>
+    </div>
+    <div class="details">
+      <dl>
+        <div><dt>Pagal tvarkaraštį</dt><dd>${hm(x.sched)}</dd></div>
+        <div><dt>Tikėtina</dt><dd>${x.k === "cancel" ? "—" : hm(x.eta)}</dd></div>
+        <div><dt>Nusileido</dt><dd>${x.landedAt ? hm(x.landedAt) : "—"}</dd></div>
+        <div><dt>Vėlavimas</dt><dd>${x.k === "cancel" ? "—" : x.delay > 0 ? "+" + x.delay + " min" : x.delay < 0 ? "anksčiau " + (-x.delay) + " min" : "nėra"}</dd></div>
+        <div><dt>Orlaivis</dt><dd>${esc(x.aircraftName || x.aircraft || "—")}</dd></div>
+        <div><dt>Registracija</dt><dd>${esc(x.reg || (lv && lv.reg) || "—")}</dd></div>
+        <div><dt>Aukštis</dt><dd>${lv && lv.alt != null && !lv.ground ? Math.round(lv.alt * 0.3048).toLocaleString("lt-LT") + " m" : "—"}</dd></div>
+        <div><dt>Greitis</dt><dd>${lv && lv.gs ? Math.round(lv.gs * 1.852) + " km/h" : "—"}</dd></div>
+        <div><dt>Atstumas iki VNO</dt><dd>${x.dist != null ? Math.round(x.dist) + " km" : "—"}</dd></div>
+      </dl>
+      ${!x.demo && fr ? `<a href="https://www.flightradar24.com/data/flights/${encodeURIComponent(fr)}" target="_blank" rel="noopener">Atidaryti Flightradar24</a>` : ""}
+    </div>
+  </div>`;
+}
+
+/* ===== Įvykiai ===== */
+document.addEventListener("click", e => {
+  const fb = e.target.closest("[data-filter]");
+  if (fb) { state.filter = fb.dataset.filter; store.set("vno.filter", state.filter); render(); return; }
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    const a = act.dataset.act;
+    if (a === "settings") openSettings();
+    if (a === "install" && deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; installHint = ""; render(); }
+    if (a === "hidehint") { installHint = ""; store.set("vno.hint", "1"); render(); }
+    return;
+  }
+  const chip = e.target.closest(".chip");
+  if (chip) {
+    state.open = chip.dataset.id; state.filter = "all"; render();
+    const el = document.querySelector(`.f[data-id="${CSS.escape(chip.dataset.id)}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const card = e.target.closest(".f");
+  if (card && !e.target.closest("a")) { state.open = state.open === card.dataset.id ? null : card.dataset.id; render(); }
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("f")) { e.preventDefault(); e.target.click(); }
+});
+$("#refresh").addEventListener("click", () => load(true));
+$("#openSettings").addEventListener("click", openSettings);
+
+function openSettings() {
+  $("#apiInput").value = API; $("#themeInput").value = theme;
+  const d = $("#settings");
+  if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+}
+$("#settings").addEventListener("close", () => {
+  if ($("#settings").returnValue !== "save") return;
+  API = $("#apiInput").value.trim(); store.set("vno.api", API);
+  theme = $("#themeInput").value; store.set("vno.theme", theme);
+  document.documentElement.dataset.theme = theme;
+  state.mode = "loading"; load(true);
+});
+
+/* ===== Laikrodis ir atnaujinimas ===== */
+function tick() { const t = fmtHMS.format(new Date()); $("#clock").innerHTML = t.slice(0, 5) + "<small>:" + t.slice(6, 8) + "</small>"; }
+tick(); setInterval(tick, 1000);
+setInterval(render, 15000);
+setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+addEventListener("resize", () => render());
+
+/* ===== Įdiegimas ===== */
+let deferredPrompt = null, installHint = "";
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if (!standalone && !store.get("vno.hint", "") && isIOS) installHint = "Įdiekite programėlę: spauskite <b>Bendrinti</b>, tada <b>Į pradžios ekraną</b>.";
+addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); deferredPrompt = e;
+  if (!store.get("vno.hint", "")) { installHint = "Įdiekite programėlę į telefoną, kad ji atsidarytų kaip įprasta programa."; render(); }
+});
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+load();
+</script>
+</body>
+</html>
